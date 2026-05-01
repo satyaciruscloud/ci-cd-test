@@ -13,7 +13,7 @@ export interface VADState {
 
 export interface VADCallbacks {
   onSpeechStart?: () => void
-  onSpeechEnd?: (audio: Float32Array) => void
+  onSpeechEnd?: (_audio: Float32Array) => void
   onVADMisfire?: () => void
 }
 
@@ -58,24 +58,32 @@ export function useVAD(options: UseVADOptions = {}) {
   const analyserRef = useRef<AnalyserNode | null>(null)
   const animationFrameRef = useRef<number | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const isListeningRef = useRef(state.isListening)
+  isListeningRef.current = state.isListening
 
-  const updateAudioLevel = useCallback(() => {
-    if (analyserRef.current && state.isListening) {
+  const audioLevelLoopRef = useRef<() => void>(() => {})
+  audioLevelLoopRef.current = () => {
+    if (analyserRef.current && isListeningRef.current) {
       const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount)
       analyserRef.current.getByteFrequencyData(dataArray)
-      
-      // Calculate RMS for more accurate audio level
+
       let sum = 0
       for (let i = 0; i < dataArray.length; i++) {
         sum += dataArray[i] * dataArray[i]
       }
       const rms = Math.sqrt(sum / dataArray.length)
       const normalizedLevel = Math.min(rms / 128, 1)
-      
+
       setState(prev => ({ ...prev, audioLevel: normalizedLevel }))
-      animationFrameRef.current = requestAnimationFrame(updateAudioLevel)
+      animationFrameRef.current = requestAnimationFrame(() => {
+        audioLevelLoopRef.current()
+      })
     }
-  }, [state.isListening])
+  }
+
+  const updateAudioLevel = useCallback(() => {
+    audioLevelLoopRef.current()
+  }, [])
 
   const startListening = useCallback(async () => {
     if (vadRef.current) {
@@ -203,7 +211,9 @@ export function useVAD(options: UseVADOptions = {}) {
   // Auto-start on mount if enabled
   useEffect(() => {
     if (autoStart) {
-      startListening()
+      queueMicrotask(() => {
+        void startListening()
+      })
     }
 
     return () => {

@@ -18,7 +18,13 @@ describe('useVAD Hook', () => {
         },
       ]),
     })
-    ;(global.navigator.mediaDevices as any).getUserMedia = mockGetUserMedia
+    Object.defineProperty(global.navigator, 'mediaDevices', {
+      value: {
+        ...global.navigator.mediaDevices,
+        getUserMedia: mockGetUserMedia,
+      },
+      configurable: true,
+    })
   })
 
   afterEach(() => {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useCallback } from "react"
+import { useRef, useCallback, useState } from "react"
 import { Play, Square, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -100,9 +100,9 @@ export function SpeechLog({ events, className }: SpeechLogProps) {
     source.buffer = audioBuffer
     source.connect(ctx.destination)
     
-    playingIdRef.current = event.id
+    setPlayingId(event.id)
     source.onended = () => {
-      playingIdRef.current = null
+      setPlayingId(null)
       currentSourceRef.current = null
     }
     
@@ -114,7 +114,7 @@ export function SpeechLog({ events, className }: SpeechLogProps) {
     if (currentSourceRef.current) {
       currentSourceRef.current.stop()
       currentSourceRef.current = null
-      playingIdRef.current = null
+      setPlayingId(null)
     }
   }, [])
 
@@ -187,15 +187,15 @@ export function SpeechLog({ events, className }: SpeechLogProps) {
                           className="h-6 w-6"
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (playingIdRef.current === event.id) {
+                            if (playingId === event.id) {
                               stopAudio()
                             } else {
                               playAudio(event)
                             }
                           }}
-                          title={playingIdRef.current === event.id ? "Stop" : "Play"}
+                          title={playingId === event.id ? "Stop" : "Play"}
                         >
-                          {playingIdRef.current === event.id ? (
+                          {playingId === event.id ? (
                             <Square className="h-3 w-3" />
                           ) : (
                             <Play className="h-3 w-3" />

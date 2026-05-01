@@ -1,6 +1,5 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { VADDemo } from '@/components/vad-demo'
 
 describe('VAD Demo Component', () => {

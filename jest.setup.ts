@@ -51,7 +51,9 @@ const mockAudioContext = {
   resume: jest.fn(),
 }
 
-global.AudioContext = jest.fn(() => mockAudioContext) as any
+global.AudioContext = jest.fn(
+  () => mockAudioContext,
+) as unknown as typeof AudioContext
 
 // Mock navigator.mediaDevices
 Object.defineProperty(global.navigator, 'mediaDevices', {
