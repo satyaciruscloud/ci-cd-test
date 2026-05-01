@@ -1,6 +1,12 @@
 "use client"
 
-import { useEffect, useRef, useState, useCallback } from "react"
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "react"
 import { MicVAD, type RealTimeVADOptions } from "@ricky0123/vad-web"
 
 export interface VADState {
@@ -59,27 +65,33 @@ export function useVAD(options: UseVADOptions = {}) {
   const animationFrameRef = useRef<number | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const isListeningRef = useRef(state.isListening)
-  isListeningRef.current = state.isListening
+
+  useLayoutEffect(() => {
+    isListeningRef.current = state.isListening
+  }, [state.isListening])
 
   const audioLevelLoopRef = useRef<() => void>(() => {})
-  audioLevelLoopRef.current = () => {
-    if (analyserRef.current && isListeningRef.current) {
-      const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount)
-      analyserRef.current.getByteFrequencyData(dataArray)
 
-      let sum = 0
-      for (let i = 0; i < dataArray.length; i++) {
-        sum += dataArray[i] * dataArray[i]
+  useLayoutEffect(() => {
+    audioLevelLoopRef.current = () => {
+      if (analyserRef.current && isListeningRef.current) {
+        const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount)
+        analyserRef.current.getByteFrequencyData(dataArray)
+
+        let sum = 0
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i] * dataArray[i]
+        }
+        const rms = Math.sqrt(sum / dataArray.length)
+        const normalizedLevel = Math.min(rms / 128, 1)
+
+        setState(prev => ({ ...prev, audioLevel: normalizedLevel }))
+        animationFrameRef.current = requestAnimationFrame(() => {
+          audioLevelLoopRef.current()
+        })
       }
-      const rms = Math.sqrt(sum / dataArray.length)
-      const normalizedLevel = Math.min(rms / 128, 1)
-
-      setState(prev => ({ ...prev, audioLevel: normalizedLevel }))
-      animationFrameRef.current = requestAnimationFrame(() => {
-        audioLevelLoopRef.current()
-      })
     }
-  }
+  }, [])
 
   const updateAudioLevel = useCallback(() => {
     audioLevelLoopRef.current()

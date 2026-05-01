@@ -19,8 +19,16 @@ const eslintConfig = [
       react: { version: "19" },
     },
     rules: {
-      "no-unused-vars": "warn",
+      "no-unused-vars": "off",
       "no-console": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
     },
   },
 ];

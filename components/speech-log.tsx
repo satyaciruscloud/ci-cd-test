@@ -58,7 +58,7 @@ function float32ToWav(samples: Float32Array, sampleRate: number = 16000): Blob {
 export function SpeechLog({ events, className }: SpeechLogProps) {
   const audioContextRef = useRef<AudioContext | null>(null)
   const currentSourceRef = useRef<AudioBufferSourceNode | null>(null)
-  const playingIdRef = useRef<string | null>(null)
+  const [playingId, setPlayingId] = useState<string | null>(null)
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString("en-US", {
